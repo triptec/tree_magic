@@ -4,6 +4,8 @@ extern crate std;
 extern crate petgraph;
 extern crate fnv;
 
+
+#[cfg(feature="staticmime")]
 pub mod builtin;
 #[cfg(not(feature="staticmime"))]
 pub mod sys;

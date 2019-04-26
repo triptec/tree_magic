@@ -21,7 +21,7 @@ lazy_static! {
 /// Load magic file before anything else.
 lazy_static! {
     static ref ALLRULES: FnvHashMap<MIME, DiGraph<MagicRule, u32>> = {
-        super::ruleset::from_u8(include_bytes!("magic")).unwrap_or(FnvHashMap::default())
+        super::ruleset::from_u8(include_bytes!("magic")).unwrap()
     };
 }
 
@@ -72,15 +72,10 @@ pub mod init {
     }
     
     pub fn get_aliaslist() -> FnvHashMap<MIME, MIME> {
-        read_aliaslist().unwrap_or(FnvHashMap::default())
+        read_aliaslist().unwrap()
     }
     
     /// Get list of supported MIME types
-    #[cfg(not(feature="staticmime"))]
-    pub fn get_supported() -> Vec<MIME> {
-        super::ALLRULES.keys().cloned().collect()
-    }
-    #[cfg(feature="staticmime")]
     pub fn get_supported() -> Vec<MIME> {
         super::ALLRULES.keys().map(|x| *x).collect()
     }
@@ -88,7 +83,7 @@ pub mod init {
     /// Get list of parent -> child subclass links
     pub fn get_subclasses() -> Vec<(MIME, MIME)> {
     
-        let mut subclasses = read_subclasses().unwrap_or(Vec::<(MIME, MIME)>::new());
+        let mut subclasses = read_subclasses().unwrap();
         
         // If child or parent refers to an alias, change it to the real type
         for x in 0..subclasses.len(){
@@ -120,7 +115,12 @@ pub mod check {
     pub fn from_u8(
         file: &[u8], mimetype: &str, cache: &CacheItem, filecache: &CacheItem
     ) -> bool {
-    
+        // Get mimetype in case user provides alias
+        let mimetype = match super::ALIASES.get(mimetype) {
+            None => mimetype,
+            Some(x) => x
+        };
+
         // Get magic ruleset
         let graph = match super::ALLRULES.get(mimetype) {
             Some(item) => item,

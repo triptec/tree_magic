@@ -26,7 +26,7 @@ lazy_static! {
 /// sys_fdo_magic always disabled on Windows.
 lazy_static! {
     static ref ALLRULES: FnvHashMap<MIME, DiGraph<MagicRule, u32>> = {
-        super::ruleset::from_filepath("/usr/share/mime/magic").unwrap_or(FnvHashMap::default())
+        super::ruleset::from_filepath("/usr/share/mime/magic").unwrap()
     };
 }
 
@@ -69,7 +69,7 @@ pub mod init {
     
     // Get filetype aliases
     fn read_aliaslist() -> Result<FnvHashMap<MIME, MIME>, std::io::Error> {
-        let faliases = File::open("/usr/share/mime/aFnvHashMap::default()liases")?;
+        let faliases = File::open("/usr/share/mime/aliases")?;
         let raliases = BufReader::new(faliases);
         let mut aliaslist = FnvHashMap::<MIME, MIME>::default();
         
@@ -86,14 +86,18 @@ pub mod init {
     }
     
     pub fn get_aliaslist() -> FnvHashMap<MIME, MIME> {
-        read_aliaslist().unwrap_or(FnvHashMap::default())
+        read_aliaslist().unwrap()
     }
-    
+
+    /// Get list of supported MIME types
+    pub fn get_supported() -> Vec<MIME> {
+        super::ALLRULES.keys().map(|x| convmime!(x)).collect()
+    }
+
     /// Get list of parent -> child subclass links
-    #[cfg(not(feature="staticmime"))]
     pub fn get_subclasses() -> Vec<(MIME, MIME)> {
     
-        let mut subclasses = read_subclasses().unwrap_or(Vec::<(MIME, MIME)>::new());
+        let mut subclasses = read_subclasses().unwrap();
         
         // If child or parent refers to an alias, change it to the real type
         for x in 0..subclasses.len(){
@@ -108,23 +112,6 @@ pub mod init {
         }
         
         subclasses
-    }
-    /// Return empty list if using staticmime
-    #[cfg(feature="staticmime")]
-    pub fn get_subclasses() -> Vec<(MIME, MIME)> {
-        Vec::<(MIME, MIME)>::new()
-    }
-    
-    /// Get list of supported MIME types
-    #[cfg(not(feature="staticmime"))]
-    pub fn get_supported() -> Vec<MIME> {
-        super::ALLRULES.keys().map(|x| convmime!(x)).collect()
-    }
-    
-    /// Return empty list if using staticmime
-    #[cfg(feature="staticmime")]
-    pub fn get_supported() -> Vec<MIME> {
-        Vec::<MIME>::new()
     }
 }
 

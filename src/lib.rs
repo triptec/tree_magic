@@ -64,11 +64,12 @@ mod basetype;
 
 /// Check these types first
 /// TODO: Poll these from the checkers? Feels a bit arbitrary
-const TYPEORDER: [&'static str; 6] =
+const TYPEORDER: [&'static str; 7] =
 [
 	"image/png",
 	"image/jpeg",
 	"image/gif",
+    "image/webp",
 	"application/zip",
 	"application/x-msdos-executable",
 	"application/pdf"
@@ -86,7 +87,7 @@ struct CheckerStruct {
 /// Maximum number of checkers supported with build config.
 /// TODO: Find any better way to do this!
 #[cfg(not(feature="staticmime"))]
-const CHECKERCOUNT: usize = 3;
+const CHECKERCOUNT: usize = 2;
 #[cfg(feature="staticmime")]
 const CHECKERCOUNT: usize = 2;
 
@@ -101,7 +102,7 @@ const CHECKERS: [CheckerStruct; CHECKERCOUNT] =
         get_subclasses: fdo_magic::sys::init::get_subclasses,
         get_aliaslist: fdo_magic::sys::init::get_aliaslist
     },
-    CheckerStruct{
+    #[cfg(feature="staticmime")] CheckerStruct{
         from_u8: fdo_magic::builtin::check::from_u8,
         from_filepath: fdo_magic::builtin::check::from_filepath,
         get_supported: fdo_magic::builtin::init::get_supported,
@@ -153,7 +154,7 @@ lazy_static! {
 pub enum Cache {
     FileCache(Vec<u8>),
     #[cfg(not(feature="staticmime"))] FdoMagicSys(fdo_magic::sys::Cache),
-    FdoMagicBuiltin(fdo_magic::builtin::Cache),
+    #[cfg(feature="staticmime")] FdoMagicBuiltin(fdo_magic::builtin::Cache),
     Basetype(basetype::Cache)
 }
 type CacheItem = Arc<RwLock<Option<Cache>>>;
